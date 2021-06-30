@@ -16,6 +16,9 @@ export const addMessageToStore = (state, payload) => {
       const convoCopy = { ...convo };
       convoCopy.messages.push(message);
       convoCopy.latestMessageText = message.text;
+      if (message.senderId === convo.otherUser.id) {
+        convoCopy.unreadCount = convoCopy.unreadCount + 1;
+      }
 
       return convoCopy;
     } else {
@@ -82,7 +85,7 @@ export const addNewConvoToStore = (state, recipientId, message) => {
   });
 };
 
-export const setMessagesToRead = (state, conversationId) => {
+export const setSentMessagesToReadInStore = (state, conversationId) => {
   // Could improve performance by normalizing state and being able
   // To access conversation directly by id
   return state.map((conversation) => {
