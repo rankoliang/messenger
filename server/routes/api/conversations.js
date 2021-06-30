@@ -1,12 +1,12 @@
-const router = require("express").Router();
-const { User, Conversation, Message } = require("../../db/models");
-const { Op } = require("sequelize");
-const onlineUsers = require("../../onlineUsers");
+const router = require('express').Router();
+const { User, Conversation, Message } = require('../../db/models');
+const { Op, fn, col } = require('sequelize');
+const onlineUsers = require('../../onlineUsers');
 
 // get all conversations for a user, include latest message text for preview, and all messages
 // include other user model so we have info on username/profile pic (don't include current user info)
 // TODO: for scalability, implement lazy loading
-router.get("/", async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);
@@ -19,33 +19,42 @@ router.get("/", async (req, res, next) => {
           user2Id: userId,
         },
       },
-      attributes: ["id"],
-      order: [[Message, "createdAt", "DESC"]],
+      attributes: ['id'],
+      order: [[Message, 'createdAt', 'DESC']],
       include: [
-        { model: Message, order: ["createdAt", "DESC"] },
+        { model: Message, order: ['createdAt', 'DESC'] },
         {
           model: User,
-          as: "user1",
+          as: 'user1',
           where: {
             id: {
               [Op.not]: userId,
             },
           },
-          attributes: ["id", "username", "photoUrl"],
+          attributes: ['id', 'username', 'photoUrl'],
           required: false,
         },
         {
           model: User,
-          as: "user2",
+          as: 'user2',
           where: {
             id: {
               [Op.not]: userId,
             },
           },
-          attributes: ["id", "username", "photoUrl"],
+          attributes: ['id', 'username', 'photoUrl'],
           required: false,
         },
       ],
+    });
+
+    const conversationIds = conversations.map(
+      (conversation) => conversation.dataValues.id
+    );
+
+    const unreadCounts = await Conversation.unreadCounts({
+      userId,
+      where: { id: conversationIds },
     });
 
     for (let i = 0; i < conversations.length; i++) {
@@ -70,6 +79,7 @@ router.get("/", async (req, res, next) => {
 
       // set properties for notification count and latest message preview
       convoJSON.latestMessageText = convoJSON.messages[0].text;
+      convoJSON.unreadCount = unreadCounts.get(convoJSON.id);
       conversations[i] = convoJSON;
     }
 
