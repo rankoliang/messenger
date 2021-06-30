@@ -1,12 +1,18 @@
-import { setSentMessagesToReadInStore } from './reducerFunctions';
+import {
+  setMessagesToReadInStore,
+  readConversationInStore,
+  SET_SENT_ONLY,
+  SET_RECEIVED_ONLY,
+} from './reducerFunctions';
 
-describe('setSentMessagesToRead', () => {
+describe('reducerFunctions', () => {
   const conversations = [
     {
       id: 1,
       otherUser: {
         id: 2,
       },
+      unreadCount: 0,
       messages: [
         {
           conversationId: 1,
@@ -20,6 +26,7 @@ describe('setSentMessagesToRead', () => {
       otherUser: {
         id: 3,
       },
+      unreadCount: 2,
       messages: [
         {
           conversationId: 2,
@@ -48,6 +55,7 @@ describe('setSentMessagesToRead', () => {
       otherUser: {
         id: 4,
       },
+      unreadCount: 1,
       messages: [
         {
           conversationId: 3,
@@ -68,54 +76,129 @@ describe('setSentMessagesToRead', () => {
     },
   ];
 
-  it('sets the read status of all sent messages to true', () => {
-    const getConversation = (id) => (convos) =>
-      convos.find((convo) => convo.id === id);
-
-    const allSentRead = pipe(
-      getConversation(2),
-      (convo) => {
-        const messages = convo.messages;
-        return messages.filter(
-          ({ senderId }) => senderId !== convo.otherUser.id
+  describe('setMessagesToRead', () => {
+    describe('with the SET_SENT_ONLY flag', () => {
+      it('sets the read status of all sent messages to true', () => {
+        const allSentRead = pipe(
+          getConversation(2),
+          (convo) => {
+            const messages = convo.messages;
+            return messages.filter(
+              ({ senderId }) => senderId !== convo.otherUser.id
+            );
+          },
+          (messages) => {
+            return messages.every(({ read }) => read);
+          }
         );
-      },
-      (messages) => {
-        return messages.every(({ read }) => read);
-      }
-    );
 
-    expect(allSentRead(conversations)).toBe(false);
+        expect(allSentRead(conversations)).toBe(false);
 
-    const nextConvos = setSentMessagesToReadInStore(conversations, 2);
+        const nextConvos = setMessagesToReadInStore(
+          conversations,
+          2,
+          SET_SENT_ONLY
+        );
 
-    expect(allSentRead(nextConvos)).toBe(true);
+        expect(allSentRead(nextConvos)).toBe(true);
+      });
+
+      it('does not set the read status of received messages to true', () => {
+        const allReceivedRead = pipe(
+          getConversation(2),
+          (convo) => {
+            const messages = convo.messages;
+            return messages.filter(
+              ({ senderId }) => senderId === convo.otherUser.id
+            );
+          },
+          (messages) => {
+            return messages.every(({ read }) => read);
+          }
+        );
+
+        expect(allReceivedRead(conversations)).toBe(false);
+
+        const nextConvos = setMessagesToReadInStore(
+          conversations,
+          2,
+          SET_SENT_ONLY
+        );
+
+        expect(allReceivedRead(nextConvos)).toBe(false);
+      });
+    });
+
+    describe('with the SET_RECEIVED_ONLY flag', () => {
+      it('does not set the read status of all sent messages to true', () => {
+        const allSentRead = pipe(
+          getConversation(2),
+          (convo) => {
+            const messages = convo.messages;
+            return messages.filter(
+              ({ senderId }) => senderId !== convo.otherUser.id
+            );
+          },
+          (messages) => {
+            return messages.every(({ read }) => read);
+          }
+        );
+
+        expect(allSentRead(conversations)).toBe(false);
+
+        const nextConvos = setMessagesToReadInStore(
+          conversations,
+          2,
+          SET_RECEIVED_ONLY
+        );
+
+        expect(allSentRead(nextConvos)).toBe(false);
+      });
+
+      it('does sets the read status of received messages to read', () => {
+        const allReceivedRead = pipe(
+          getConversation(2),
+          (convo) => {
+            const messages = convo.messages;
+            return messages.filter(
+              ({ senderId }) => senderId === convo.otherUser.id
+            );
+          },
+          (messages) => {
+            return messages.every(({ read }) => read);
+          }
+        );
+
+        expect(allReceivedRead(conversations)).toBe(false);
+
+        const nextConvos = setMessagesToReadInStore(
+          conversations,
+          2,
+          SET_RECEIVED_ONLY
+        );
+
+        expect(allReceivedRead(nextConvos)).toBe(true);
+      });
+    });
   });
 
-  it('does not set the read status of receivedMessagesToRead', () => {
-    const getConversation = (id) => (convos) =>
-      convos.find((convo) => convo.id === id);
+  describe('readConversationInStore', () => {
+    it('sets the unreadCount of the conversation to 0', () => {
+      const conversation = getConversation(2)(conversations);
 
-    const allReceivedRead = pipe(
-      getConversation(3),
-      (convo) => {
-        const messages = convo.messages;
-        return messages.filter(
-          ({ senderId }) => senderId === convo.otherUser.id
-        );
-      },
-      (messages) => {
-        return messages.every(({ read }) => read);
-      }
-    );
+      expect(conversation.unreadCount).toBe(2);
 
-    expect(allReceivedRead(conversations)).toBe(false);
+      const nextConvo = getConversation(2)(
+        readConversationInStore(conversations, 2)
+      );
 
-    const nextConvos = setSentMessagesToReadInStore(conversations, 2);
-
-    expect(allReceivedRead(nextConvos)).toBe(true);
+      expect(nextConvo.unreadCount).toBe(0);
+    });
   });
 });
+
+const getConversation = (id) => (convos) =>
+  convos.find((convo) => convo.id === id);
 
 // calls functions from left to right to the given value
 const pipe =

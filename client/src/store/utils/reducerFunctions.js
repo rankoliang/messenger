@@ -85,17 +85,39 @@ export const addNewConvoToStore = (state, recipientId, message) => {
   });
 };
 
-export const setSentMessagesToReadInStore = (state, conversationId) => {
+export const setMessagesToReadInStore = (state, conversationId, callback) => {
   // Could improve performance by normalizing state and being able
   // To access conversation directly by id
   return state.map((conversation) => {
     if (conversation.id === conversationId) {
-      const newMessages = conversation.messages.map((message) => ({
-        ...message,
-        read: true,
-      }));
+      const newMessages = conversation.messages.map((message) => {
+        if (callback(message.senderId, conversation.otherUser.id)) {
+          return {
+            ...message,
+            read: true,
+          };
+        } else {
+          return message;
+        }
+      });
 
       return { ...conversation, messages: newMessages };
+    } else {
+      return conversation;
+    }
+  });
+};
+
+export const SET_SENT_ONLY = (senderId, otherUserId) =>
+  senderId !== otherUserId;
+
+export const SET_RECEIVED_ONLY = (senderId, otherUserId) =>
+  senderId === otherUserId;
+
+export const readConversationInStore = (state, conversationId) => {
+  return state.map((conversation) => {
+    if (conversation.id === conversationId) {
+      return { ...conversation, unreadCount: 0 };
     } else {
       return conversation;
     }
