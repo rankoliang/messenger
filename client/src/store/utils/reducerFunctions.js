@@ -81,3 +81,20 @@ export const addNewConvoToStore = (state, recipientId, message) => {
     }
   });
 };
+
+export const setMessagesToRead = (state, conversationId) => {
+  // Could improve performance by normalizing state and being able
+  // To access conversation directly by id
+  return state.map((conversation) => {
+    if (conversation.id === conversationId) {
+      const newMessages = conversation.messages.map((message) => ({
+        ...message,
+        read: true,
+      }));
+
+      return { ...conversation, messages: newMessages };
+    } else {
+      return conversation;
+    }
+  });
+};
