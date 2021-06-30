@@ -5,6 +5,8 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
+  setReceivedMessagesToRead,
+  readConversation,
 } from '../conversations';
 import { setActiveChat } from '../activeConversation';
 import { gotUser, setFetchingStatus } from '../user';
@@ -122,6 +124,8 @@ export const searchUsers = (searchTerm) => async (dispatch) => {
 export const setActiveConversation = (conversation) => async (dispatch) => {
   try {
     dispatch(setActiveChat(conversation.otherUser.username));
+    dispatch(setReceivedMessagesToRead(conversation.id));
+    dispatch(readConversation(conversation.id));
     socket.emit('read-sent-messages', conversation.id);
   } catch (err) {
     console.error(err);
