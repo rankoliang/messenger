@@ -126,7 +126,10 @@ export const setActiveConversation = (conversation) => async (dispatch) => {
     dispatch(setActiveChat(conversation.otherUser.username));
     dispatch(setReceivedMessagesToRead(conversation.id));
     dispatch(readConversation(conversation.id));
-    socket.emit('read-sent-messages', conversation.id);
+    socket.emit('read-sent-messages', {
+      conversationId: conversation.id,
+      otherUserId: conversation.otherUser.id,
+    });
   } catch (err) {
     console.error(err);
   }

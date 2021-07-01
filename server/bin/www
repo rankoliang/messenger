@@ -11,6 +11,7 @@ const { app, sessionStore } = require('../app');
 const http = require('http');
 const db = require('../db');
 const onlineUsers = require('../onlineUsers');
+const { Message } = require('../db/models/index');
 
 /**
  * Get port from environment and store in Express.
@@ -55,7 +56,16 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('read-sent-messages', (conversationId) => {
+  socket.on('read-sent-messages', async ({ conversationId, otherUserId }) => {
+    await Message.update(
+      { read: true },
+      {
+        where: {
+          conversationId,
+          senderId: otherUserId,
+        },
+      }
+    );
     socket.broadcast.emit('read-sent-messages', conversationId);
   });
 });
