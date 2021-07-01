@@ -50,3 +50,29 @@ In a separate terminal, start the back end:
 cd server
 npm run dev
 ```
+
+### Running tests
+
+To run the tests for the client, run:
+
+```
+cd client
+npm run test
+```
+
+To run the test for the server, run:
+
+```
+cd server
+npm run test
+```
+
+## Improvements
+
+Some improvements that could be done to the application
+
+- Normalize the redux store
+  - Currently, in order to access a specific conversation or message, one would have to iterate through all of the conversations to modify it.
+  - It would be easier to develop and better for performance if a conversation with a specific id could be accessed directly.
+- Sockets should emit only directly to the recipient of the message
+  - When you send a message, it is broadcasted to anyone connected, which could mean that personal information could be leaked.
