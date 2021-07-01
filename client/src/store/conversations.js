@@ -4,17 +4,24 @@ import {
   addSearchedUsersToStore,
   removeOfflineUserFromStore,
   addMessageToStore,
-} from "./utils/reducerFunctions";
+  setMessagesToReadInStore,
+  readConversationInStore,
+  SET_SENT_ONLY,
+  SET_RECEIVED_ONLY,
+} from './utils/reducerFunctions';
 
 // ACTIONS
 
-const GET_CONVERSATIONS = "GET_CONVERSATIONS";
-const SET_MESSAGE = "SET_MESSAGE";
-const ADD_ONLINE_USER = "ADD_ONLINE_USER";
-const REMOVE_OFFLINE_USER = "REMOVE_OFFLINE_USER";
-const SET_SEARCHED_USERS = "SET_SEARCHED_USERS";
-const CLEAR_SEARCHED_USERS = "CLEAR_SEARCHED_USERS";
-const ADD_CONVERSATION = "ADD_CONVERSATION";
+const GET_CONVERSATIONS = 'GET_CONVERSATIONS';
+const SET_MESSAGE = 'SET_MESSAGE';
+const ADD_ONLINE_USER = 'ADD_ONLINE_USER';
+const REMOVE_OFFLINE_USER = 'REMOVE_OFFLINE_USER';
+const SET_SEARCHED_USERS = 'SET_SEARCHED_USERS';
+const CLEAR_SEARCHED_USERS = 'CLEAR_SEARCHED_USERS';
+const ADD_CONVERSATION = 'ADD_CONVERSATION';
+const READ_CONVERSATION = 'READ_CONVERSATION';
+const SET_SENT_MESSAGES_TO_READ = 'SET_SENT_MESSAGES_TO_READ';
+const SET_RECEIVED_MESSAGES_TO_READ = 'SET_RECEIVED_MESSAGES_TO_READ';
 
 // ACTION CREATORS
 
@@ -67,6 +74,27 @@ export const addConversation = (recipientId, newMessage) => {
   };
 };
 
+export const setSentMessagesToRead = (conversationId) => {
+  return {
+    type: SET_SENT_MESSAGES_TO_READ,
+    conversationId,
+  };
+};
+
+export const readConversation = (conversationId) => {
+  return {
+    type: READ_CONVERSATION,
+    conversationId,
+  };
+};
+
+export const setReceivedMessagesToRead = (conversationId) => {
+  return {
+    type: SET_RECEIVED_MESSAGES_TO_READ,
+    conversationId,
+  };
+};
+
 // REDUCER
 
 const reducer = (state = [], action) => {
@@ -91,6 +119,20 @@ const reducer = (state = [], action) => {
         action.payload.recipientId,
         action.payload.newMessage
       );
+    case SET_SENT_MESSAGES_TO_READ:
+      return setMessagesToReadInStore(
+        state,
+        action.conversationId,
+        SET_SENT_ONLY
+      );
+    case SET_RECEIVED_MESSAGES_TO_READ:
+      return setMessagesToReadInStore(
+        state,
+        action.conversationId,
+        SET_RECEIVED_ONLY
+      );
+    case READ_CONVERSATION:
+      return readConversationInStore(state, action.conversationId);
     default:
       return state;
   }
