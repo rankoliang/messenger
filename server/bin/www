@@ -60,17 +60,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('read-sent-messages', async ({ conversationId, otherUserId }) => {
-    await Message.update(
-      { read: true },
-      {
-        where: {
-          conversationId,
-          senderId: otherUserId,
-        },
-      }
-    );
-
+  socket.on('read-sent-messages', ({ conversationId, otherUserId }) => {
     socket.to(otherUserId).emit('read-sent-messages', conversationId);
   });
 });

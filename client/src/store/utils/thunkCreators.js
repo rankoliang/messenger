@@ -129,9 +129,15 @@ export const setActiveConversation = (conversation) => async (dispatch) => {
       return;
     }
 
+    // Updates messages in the conversation to read
+    await axios.post(`/api/conversations/${conversation.id}/read`, {
+      otherUserId: conversation.otherUser.id,
+    });
+
     dispatch(setReceivedMessagesToRead(conversation.id));
     dispatch(readConversation(conversation.id));
 
+    // sends an event to the server to alert the other user
     socket.emit('read-sent-messages', {
       conversationId: conversation.id,
       otherUserId: conversation.otherUser.id,
