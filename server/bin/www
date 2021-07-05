@@ -34,8 +34,8 @@ const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
   socket.on('go-online', (id) => {
-    if (!onlineUsers.includes(id)) {
-      onlineUsers.push(id);
+    if (!onlineUsers.has(id)) {
+      onlineUsers.add(id);
     }
 
     // Each user joins a room with their own id
@@ -53,9 +53,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('logout', (id) => {
-    if (onlineUsers.includes(id)) {
-      userIndex = onlineUsers.indexOf(id);
-      onlineUsers.splice(userIndex, 1);
+    const onlineUserRemoved = onlineUsers.delete(id);
+
+    if (onlineUserRemoved) {
       socket.broadcast.emit('remove-offline-user', id);
     }
   });
