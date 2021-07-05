@@ -124,8 +124,14 @@ export const searchUsers = (searchTerm) => async (dispatch) => {
 export const setActiveConversation = (conversation) => async (dispatch) => {
   try {
     dispatch(setActiveChat(conversation.otherUser.username));
+
+    if (!conversation?.id) {
+      return;
+    }
+
     dispatch(setReceivedMessagesToRead(conversation.id));
     dispatch(readConversation(conversation.id));
+
     socket.emit('read-sent-messages', {
       conversationId: conversation.id,
       otherUserId: conversation.otherUser.id,
