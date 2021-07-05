@@ -34,9 +34,7 @@ const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
   socket.on('go-online', (id) => {
-    if (!onlineUsers.has(id)) {
-      onlineUsers.add(id);
-    }
+    onlineUsers.add(id);
 
     // Each user joins a room with their own id
     socket.join(id);
