@@ -42,7 +42,6 @@ socket.on('connect', () => {
       store.dispatch(clearOnLogout());
     }
 
-    // TODO implement feedback for the user
     console.error(err.message);
   });
 });
