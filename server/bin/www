@@ -54,6 +54,7 @@ io.use((socket, next) => {
 
   if (!token) {
     // Not logged in
+    socket.disconnect();
     return next(new Error('Not logged in'));
   }
 
@@ -62,12 +63,23 @@ io.use((socket, next) => {
       socket.user = user;
       return next();
     })
-    .catch(() => next(new Error('Authentication Error')));
+    .catch(() => {
+      socket.disconnect();
+      next(new Error('Authentication Error'));
+    });
 });
 
 io.on('connection', (socket) => {
   socket.on('go-online', () => {
-    const { id } = socket.user;
+    let id;
+
+    try {
+      id = socket.user.id;
+    } catch (error) {
+      console.log(error);
+      socket.disconnect();
+      return;
+    }
 
     onlineUsers.add(id);
 
@@ -79,18 +91,31 @@ io.on('connection', (socket) => {
   });
 
   socket.on('new-message', (data) => {
-    if (data.message?.senderId === socket.user.id) {
-      socket.to(data.recipientId).emit('new-message', {
-        message: data.message,
-        sender: data.sender,
-      });
+    try {
+      if (data.message?.senderId === socket.user.id) {
+        socket.to(data.recipientId).emit('new-message', {
+          message: data.message,
+          sender: data.sender,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      socket.disconnect();
     }
   });
 
   socket.on('logout', () => {
-    const { id } = socket.user;
+    let id;
 
-    delete socket.user;
+    try {
+      id = socket.user.id;
+
+      delete socket.user;
+    } catch (error) {
+      console.log(error);
+      socket.disconnect();
+      return;
+    }
 
     const onlineUserRemoved = onlineUsers.delete(id);
 
