@@ -81,7 +81,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    onlineUsers.add(id);
+    onlineUsers.connect(id);
 
     // Each user joins a room with their own id
     socket.join(id);
@@ -117,9 +117,9 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const onlineUserRemoved = onlineUsers.delete(id);
+    onlineUsers.disconnect(id);
 
-    if (onlineUserRemoved) {
+    if (!onlineUsers.has(id)) {
       socket.broadcast.emit('remove-offline-user', id);
     }
   });
