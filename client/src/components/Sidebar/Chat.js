@@ -1,11 +1,11 @@
 import React from 'react';
 import { Box, Badge } from '@material-ui/core';
 import { BadgeAvatar, ChatContent } from '../Sidebar';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, makeStyles } from '@material-ui/core/styles';
 import { setActiveConversation } from '../../store/utils/thunkCreators';
 import { useDispatch } from 'react-redux';
 
-const styles = {
+const useStyles = makeStyles({
   root: {
     display: 'flex',
     borderRadius: 8,
@@ -21,7 +21,7 @@ const styles = {
   badge: {
     width: '100%',
   },
-};
+});
 
 const StyledBadge = withStyles(() => ({
   badge: {
@@ -38,11 +38,12 @@ const StyledBadge = withStyles(() => ({
 }))(Badge);
 
 const Chat = ({
-  classes,
   conversation,
   conversation: { unreadCount, otherUser },
 }) => {
   const dispatch = useDispatch();
+
+  const classes = useStyles();
 
   const handleClick = () => {
     dispatch(setActiveConversation(conversation));
@@ -69,4 +70,4 @@ const Chat = ({
   );
 };
 
-export default withStyles(styles)(Chat);
+export default Chat;
