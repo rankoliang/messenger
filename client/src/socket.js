@@ -6,8 +6,16 @@ import {
   addOnlineUser,
   setSentMessagesToRead,
 } from './store/conversations';
+import { logout } from './store/utils/thunkCreators';
+import { clearOnLogout } from './store/index';
 
-const socket = io(window.location.origin);
+const socket = io(window.location.origin, {
+  auth: (sendAuth) => {
+    const token = localStorage.getItem('messenger-token');
+
+    sendAuth({ token });
+  },
+});
 
 socket.on('connect', () => {
   console.log('connected to server');
@@ -26,6 +34,15 @@ socket.on('connect', () => {
 
   socket.on('read-sent-messages', (conversationId) => {
     store.dispatch(setSentMessagesToRead(conversationId));
+  });
+
+  socket.on('connect_error', (err) => {
+    if (err.message === 'Authentication Error') {
+      store.dispatch(logout());
+      store.dispatch(clearOnLogout());
+    }
+
+    console.error(err.message);
   });
 });
 

@@ -71,7 +71,7 @@ router.get('/', async (req, res, next) => {
       }
 
       // set property for online status of the other user
-      if (onlineUsers.includes(convoJSON.otherUser.id)) {
+      if (onlineUsers.has(convoJSON.otherUser.id)) {
         convoJSON.otherUser.online = true;
       } else {
         convoJSON.otherUser.online = false;
@@ -84,6 +84,50 @@ router.get('/', async (req, res, next) => {
     }
 
     res.json(conversations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/:conversationId/read', async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+
+    const userId = req.user.id;
+
+    const { conversationId } = req.params;
+
+    const { otherUserId } = req.body;
+
+    // Checks if the conversation exists and that the user is part of it
+    const conversation = await Conversation.findOne({
+      where: {
+        id: conversationId,
+        [Op.or]: {
+          user1Id: userId,
+          user2Id: userId,
+        },
+      },
+    });
+
+    if (conversation) {
+      await Message.update(
+        { read: true },
+        {
+          where: {
+            conversationId,
+            senderId: otherUserId,
+          },
+        }
+      );
+
+      res.sendStatus(201);
+    } else {
+      // Conversation was not found or the user is not part of the convo
+      res.sendStatus(403);
+    }
   } catch (error) {
     next(error);
   }

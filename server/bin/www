@@ -11,7 +11,8 @@ const { app, sessionStore } = require('../app');
 const http = require('http');
 const db = require('../db');
 const onlineUsers = require('../onlineUsers');
-const { Message } = require('../db/models/index');
+const { User } = require('../db/models/index');
+const jwt = require('jsonwebtoken');
 
 /**
  * Get port from environment and store in Express.
@@ -32,41 +33,99 @@ const server = http.createServer(app);
 
 const io = require('socket.io')(server);
 
+const authenticate = (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.SESSION_SECRET, (err, decoded) => {
+      if (err) {
+        return reject(err);
+      }
+
+      User.findOne({
+        where: { id: decoded.id },
+      })
+        .then(resolve)
+        .catch(reject);
+    });
+  });
+};
+
+io.use((socket, next) => {
+  const { token } = socket.handshake.auth;
+
+  if (!token) {
+    // Not logged in
+    socket.disconnect();
+    return next(new Error('Not logged in'));
+  }
+
+  authenticate(token)
+    .then((user) => {
+      socket.user = user;
+      return next();
+    })
+    .catch(() => {
+      socket.disconnect();
+      next(new Error('Authentication Error'));
+    });
+});
+
 io.on('connection', (socket) => {
-  socket.on('go-online', (id) => {
-    if (!onlineUsers.includes(id)) {
-      onlineUsers.push(id);
+  socket.on('go-online', () => {
+    let id;
+
+    try {
+      id = socket.user.id;
+    } catch (error) {
+      console.log(error);
+      socket.disconnect();
+      return;
     }
+
+    onlineUsers.connect(id);
+
+    // Each user joins a room with their own id
+    socket.join(id);
+
     // send the user who just went online to everyone else who is already online
     socket.broadcast.emit('add-online-user', id);
   });
 
   socket.on('new-message', (data) => {
-    socket.broadcast.emit('new-message', {
-      message: data.message,
-      sender: data.sender,
-    });
+    try {
+      if (data.message?.senderId === socket.user.id) {
+        socket.to(data.recipientId).emit('new-message', {
+          message: data.message,
+          sender: data.sender,
+        });
+      }
+    } catch (error) {
+      console.log(error);
+      socket.disconnect();
+    }
   });
 
-  socket.on('logout', (id) => {
-    if (onlineUsers.includes(id)) {
-      userIndex = onlineUsers.indexOf(id);
-      onlineUsers.splice(userIndex, 1);
+  socket.on('logout', () => {
+    let id;
+
+    try {
+      id = socket.user.id;
+
+      delete socket.user;
+    } catch (error) {
+      console.log(error);
+      socket.disconnect();
+      return;
+    }
+
+    onlineUsers.disconnect(id);
+
+    if (!onlineUsers.has(id)) {
       socket.broadcast.emit('remove-offline-user', id);
     }
   });
 
-  socket.on('read-sent-messages', async ({ conversationId, otherUserId }) => {
-    await Message.update(
-      { read: true },
-      {
-        where: {
-          conversationId,
-          senderId: otherUserId,
-        },
-      }
-    );
-    socket.broadcast.emit('read-sent-messages', conversationId);
+  socket.on('read-sent-messages', ({ conversationId, otherUserId }) => {
+    socket.to(otherUserId).emit('read-sent-messages', conversationId);
   });
 });
 
