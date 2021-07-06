@@ -51,6 +51,8 @@ export const login = (credentials) => async (dispatch) => {
   try {
     const { data } = await axios.post('/auth/login', credentials);
     await localStorage.setItem('messenger-token', data.token);
+    // Force socket to reconnect and reauthenticate with the new token
+    socket.disconnect().connect();
     dispatch(gotUser(data));
     socket.emit('go-online', data.id);
   } catch (error) {
