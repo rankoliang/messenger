@@ -89,7 +89,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post('/:conversationId/read', async (req, res, next) => {
+router.patch('/:conversationId/read', async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);

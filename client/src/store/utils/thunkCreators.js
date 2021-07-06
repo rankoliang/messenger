@@ -130,7 +130,7 @@ export const setActiveConversation = (conversation) => async (dispatch) => {
     }
 
     // Updates messages in the conversation to read
-    await axios.post(`/api/conversations/${conversation.id}/read`, {
+    await axios.patch(`/api/conversations/${conversation.id}/read`, {
       otherUserId: conversation.otherUser.id,
     });
 
