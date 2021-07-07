@@ -1,9 +1,10 @@
-const router = require("express").Router();
-const { Conversation, Message } = require("../../db/models");
-const onlineUsers = require("../../onlineUsers");
+const router = require('express').Router();
+const { Conversation, Message } = require('../../db/models');
+const { Op } = require('sequelize');
+const onlineUsers = require('../../onlineUsers');
 
 // expects {recipientId, text, conversationId } in body (conversationId will be null if no conversation exists yet)
-router.post("/", async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     if (!req.user) {
       return res.sendStatus(401);
@@ -11,18 +12,27 @@ router.post("/", async (req, res, next) => {
     const senderId = req.user.id;
     const { recipientId, text, conversationId, sender } = req.body;
 
-    // if we already know conversation id, we can save time and just add it to message and return
-    if (conversationId) {
-      const message = await Message.create({ senderId, text, conversationId });
-      return res.json({ message, sender });
-    }
-    // if we don't have conversation id, find a conversation to make sure it doesn't already exist
-    let conversation = await Conversation.findConversation(
-      senderId,
-      recipientId
-    );
+    let conversation;
 
-    if (!conversation) {
+    if (conversationId) {
+      conversation = await Conversation.findOne({
+        where: {
+          id: conversationId,
+          [Op.or]: {
+            user1Id: senderId,
+            user2Id: senderId,
+          },
+        },
+      });
+    } else {
+      // if we don't have conversation id, find a conversation to make sure it doesn't already exist
+      conversation = await Conversation.findConversation(senderId, recipientId);
+    }
+
+    if (conversationId && !conversation) {
+      // A request to send a message to an invalid conversation was made
+      res.sendStatus(403);
+    } else if (!conversation) {
       // create conversation
       conversation = await Conversation.create({
         user1Id: senderId,
@@ -32,6 +42,7 @@ router.post("/", async (req, res, next) => {
         sender.online = true;
       }
     }
+
     const message = await Message.create({
       senderId,
       text,

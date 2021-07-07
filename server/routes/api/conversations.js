@@ -3,6 +3,9 @@ const { User, Conversation, Message } = require('../../db/models');
 const { Op } = require('sequelize');
 const onlineUsers = require('../../onlineUsers');
 
+const latestMessage = (convoJSON) =>
+  convoJSON.messages[convoJSON.messages.length - 1];
+
 // get all conversations for a user, include latest message text for preview, and all messages
 // include other user model so we have info on username/profile pic (don't include current user info)
 // TODO: for scalability, implement lazy loading
@@ -20,7 +23,7 @@ router.get('/', async (req, res, next) => {
         },
       },
       attributes: ['id'],
-      order: [[Message, 'createdAt', 'DESC']],
+      order: [[Message, 'createdAt', 'ASC']],
       include: [
         { model: Message, order: ['createdAt', 'DESC'] },
         {
@@ -78,10 +81,22 @@ router.get('/', async (req, res, next) => {
       }
 
       // set properties for notification count and latest message preview
-      convoJSON.latestMessageText = convoJSON.messages[0].text;
+      convoJSON.latestMessageText = latestMessage(convoJSON)?.text;
       convoJSON.unreadCount = unreadCounts.get(convoJSON.id) || 0;
       conversations[i] = convoJSON;
     }
+
+    conversations.sort((a, b) => {
+      if (a.messages.length === 0 && b.messages.length === 0) {
+        return 0;
+      } else if (a.messages.length === 0) {
+        return 1;
+      } else if (b.messages.length === 0) {
+        return -1;
+      }
+
+      return latestMessage(b).createdAt - latestMessage(a).createdAt;
+    });
 
     res.json(conversations);
   } catch (error) {
