@@ -2,7 +2,8 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Box } from '@material-ui/core';
 import { Input, Header, Messages } from './index';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setActiveConversation } from '../../store/utils/thunkCreators';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -21,6 +22,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const ActiveChat = () => {
+  const dispatch = useDispatch();
   const classes = useStyles();
 
   const user = useSelector((state) => state.user);
@@ -33,6 +35,10 @@ const ActiveChat = () => {
             conversation.otherUser.username === state.activeConversation
         )
     ) || {};
+
+  const onInputFocus = async () => {
+    await dispatch(setActiveConversation(conversation));
+  };
 
   return (
     <Box className={classes.root}>
@@ -52,6 +58,7 @@ const ActiveChat = () => {
             <Input
               otherUser={conversation.otherUser}
               conversationId={conversation.id}
+              onFocus={onInputFocus}
               user={user}
             />
           </Box>
