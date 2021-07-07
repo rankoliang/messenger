@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Box, Badge } from '@material-ui/core';
 import { BadgeAvatar, ChatContent } from '../Sidebar';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, makeStyles } from '@material-ui/core/styles';
 import { setActiveConversation } from '../../store/utils/thunkCreators';
-import { connect } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
-const styles = {
+const useStyles = makeStyles({
   root: {
     display: 'flex',
     borderRadius: 8,
@@ -21,7 +21,7 @@ const styles = {
   badge: {
     width: '100%',
   },
-};
+});
 
 const StyledBadge = withStyles(() => ({
   badge: {
@@ -37,46 +37,37 @@ const StyledBadge = withStyles(() => ({
   },
 }))(Badge);
 
-class Chat extends Component {
-  handleClick = async (conversation) => {
-    await this.props.setActiveConversation(conversation);
+const Chat = ({
+  conversation,
+  conversation: { unreadCount, otherUser },
+}) => {
+  const dispatch = useDispatch();
+
+  const classes = useStyles();
+
+  const handleClick = () => {
+    dispatch(setActiveConversation(conversation));
   };
 
-  render() {
-    const { classes } = this.props;
-    const { unreadCount, otherUser } = this.props.conversation;
-
-    return (
-      <Box
-        onClick={() => this.handleClick(this.props.conversation)}
-        className={classes.root}
+  return (
+    <Box onClick={handleClick} className={classes.root}>
+      <StyledBadge
+        color="primary"
+        badgeContent={unreadCount}
+        variant="standard"
+        anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
+        className={classes.badge}
       >
-        <StyledBadge
-          color="primary"
-          badgeContent={unreadCount}
-          variant="standard"
-          anchorOrigin={{ horizontal: 'right', vertical: 'top' }}
-          className={classes.badge}
-        >
-          <BadgeAvatar
-            photoUrl={otherUser.photoUrl}
-            username={otherUser.username}
-            online={otherUser.online}
-            sidebar={true}
-          />
-          <ChatContent conversation={this.props.conversation} />
-        </StyledBadge>
-      </Box>
-    );
-  }
-}
-
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setActiveConversation: async (conversation) => {
-      await dispatch(setActiveConversation(conversation));
-    },
-  };
+        <BadgeAvatar
+          photoUrl={otherUser.photoUrl}
+          username={otherUser.username}
+          online={otherUser.online}
+          sidebar={true}
+        />
+        <ChatContent conversation={conversation} />
+      </StyledBadge>
+    </Box>
+  );
 };
 
-export default connect(null, mapDispatchToProps)(withStyles(styles)(Chat));
+export default Chat;
