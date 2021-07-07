@@ -3,8 +3,8 @@ const { User, Conversation, Message } = require('../../db/models');
 const { Op } = require('sequelize');
 const onlineUsers = require('../../onlineUsers');
 
-const latestMessage = (conversation) =>
-  conversation.messages[conversation.messages.length - 1];
+const latestMessage = (convoJSON) =>
+  convoJSON.messages[convoJSON.messages.length - 1];
 
 // get all conversations for a user, include latest message text for preview, and all messages
 // include other user model so we have info on username/profile pic (don't include current user info)
