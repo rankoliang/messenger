@@ -85,6 +85,16 @@ export const addNewConvoToStore = (state, recipientId, message) => {
   });
 };
 
+const lastReadMessage = (messages, otherUser) => {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+
+    if (message.senderId !== otherUser.id && message.read === true) {
+      return message;
+    }
+  }
+};
+
 export const setMessagesToReadInStore = (state, conversationId, callback) => {
   // Could improve performance by normalizing state and being able
   // To access conversation directly by id
@@ -101,7 +111,12 @@ export const setMessagesToReadInStore = (state, conversationId, callback) => {
         }
       });
 
-      return { ...conversation, messages: newMessages };
+      return {
+        ...conversation,
+        messages: newMessages,
+        lastReadMessageId: lastReadMessage(newMessages, conversation.otherUser)
+          ?.id,
+      };
     } else {
       return conversation;
     }
@@ -117,7 +132,14 @@ export const SET_RECEIVED_ONLY = (senderId, otherUserId) =>
 export const readConversationInStore = (state, conversationId) => {
   return state.map((conversation) => {
     if (conversation.id === conversationId) {
-      return { ...conversation, unreadCount: 0 };
+      return {
+        ...conversation,
+        unreadCount: 0,
+        lastReadMessageId: lastReadMessage(
+          conversation.messages,
+          conversation.otherUser
+        )?.id,
+      };
     } else {
       return conversation;
     }
