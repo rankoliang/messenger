@@ -55,7 +55,6 @@ const SenderBubble = (props) => {
     <Box className={classes.root}>
       <Box className={classes.info}>
         <Typography className={classes.date}>{time}</Typography>
-        <SeenIcon read={read} className={classes.seenIcon} />
       </Box>
       <Box className={classes.bubble}>
         <Typography className={classes.text}>{text}</Typography>
