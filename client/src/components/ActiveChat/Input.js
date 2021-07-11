@@ -17,7 +17,7 @@ const useStyles = makeStyles({
   },
 });
 
-const Input = ({ otherUser, conversationId }) => {
+const Input = ({ otherUser, conversationId, onFocus}) => {
   const classes = useStyles();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
@@ -52,6 +52,7 @@ const Input = ({ otherUser, conversationId }) => {
           value={text}
           name="text"
           onChange={handleChange}
+          onFocus={onFocus}
         />
       </FormControl>
     </form>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Typography } from '@material-ui/core';
-import SeenIcon from './SeenIcon';
+import { Box, Typography, Avatar } from '@material-ui/core';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -36,21 +35,33 @@ const useStyles = makeStyles(() => ({
   seenIcon: {
     color: '#BECCE2',
   },
+  avatar: {
+    height: 20,
+    width: 20,
+    marginTop: 6,
+  },
 }));
 
 const SenderBubble = (props) => {
   const classes = useStyles();
-  const { time, text, read } = props;
+
+  const { time, text, isLastReadMessage, otherUser } = props;
 
   return (
     <Box className={classes.root}>
       <Box className={classes.info}>
         <Typography className={classes.date}>{time}</Typography>
-        <SeenIcon read={read} className={classes.seenIcon} />
       </Box>
       <Box className={classes.bubble}>
         <Typography className={classes.text}>{text}</Typography>
       </Box>
+      {isLastReadMessage && (
+        <Avatar
+          alt={otherUser.username}
+          src={otherUser.photoUrl}
+          className={classes.avatar}
+        ></Avatar>
+      )}
     </Box>
   );
 };
